@@ -2,9 +2,15 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
+  "engines": {
+  "node": "18"
+    },
+  
   "scripts": {
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "start": "node server.js"
+
   },
   "keywords": [],
   "author": "",
