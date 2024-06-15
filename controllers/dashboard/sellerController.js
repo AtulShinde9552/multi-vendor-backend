@@ -1,108 +1,149 @@
-const sellerModel = require('../../models/sellerModel')
-const { responseReturn } = require('../../utiles/response')
+const sellerModel = require('../../models/sellerModel');
+const { responseReturn } = require('../../utiles/response');
 
 class sellerController {
-    
-    get_seller_request = async (req, res) => {
-        const { page, searchValue, parPage } = req.query
-        const skipPage = parseInt(parPage) * (parseInt(page) - 1)
-        try {
-            if (searchValue) {
-                //const seller
-            } else {
-                const sellers = await sellerModel.find({ status: 'pending' }).skip(skipPage).limit(parPage).sort({ createdAt: -1 })
-                const totalSeller = await sellerModel.find({ status: 'pending' }).countDocuments()
-                responseReturn(res, 200, { totalSeller, sellers })
-            }
-        } catch (error) {
-            responseReturn(res, 500, { error: error.message })
-        }
-    }
-    get_seller = async (req, res) => {
-        const { sellerId } = req.params
 
+    get_seller_request = async (req, res) => {
+        const { page = 1, searchValue = '', parPage = 10 } = req.query;
+        const skipPage = parseInt(parPage) * (parseInt(page) - 1);
+        
         try {
-            const seller = await sellerModel.findById(sellerId)
-            responseReturn(res, 200, { seller })
+            let query = { status: 'pending' };
+
+            if (searchValue) {
+                query = {
+                    ...query,
+                    $text: { $search: searchValue }
+                };
+            }
+
+            const sellers = await sellerModel.find(query).skip(skipPage).limit(parseInt(parPage)).sort({ createdAt: -1 });
+            const totalSeller = await sellerModel.countDocuments(query);
+
+            responseReturn(res, 200, { totalSeller, sellers });
         } catch (error) {
-            responseReturn(res, 500, { error: error.message })
+            responseReturn(res, 500, { error: error.message });
         }
-    }
+    };
+
+    get_seller = async (req, res) => {
+        const { sellerId } = req.params;
+        
+        try {
+            const seller = await sellerModel.findById(sellerId);
+            responseReturn(res, 200, { seller });
+        } catch (error) {
+            responseReturn(res, 500, { error: error.message });
+        }
+    };
 
     seller_status_update = async (req, res) => {
-        const { sellerId, status } = req.body
+        const { sellerId, division, district, shopName, address, bankName, bankAccount, ifscCode, pinCode, login, password,image} = req.body;
         try {
-            await sellerModel.findByIdAndUpdate(sellerId, {
-                status
-            })
-            const seller = await sellerModel.findById(sellerId)
-            responseReturn(res, 200, { seller, message: 'seller status update success' })
+            const updateData = {
+                shopInfo: {
+                    shopName,
+                    division,
+                    district,
+                    address,
+                    bankName,
+                    bankAccount,
+                    ifscCode,
+                    pinCode,
+                    login,
+                    password
+                },
+                image
+            };
+
+            await sellerModel.findByIdAndUpdate(sellerId, updateData, { new: true });
+            const seller = await sellerModel.findById(sellerId);
+
+            responseReturn(res, 200, { seller, message: 'Seller status update success' });
         } catch (error) {
-            responseReturn(res, 500, { error: error.message })
+            responseReturn(res, 500, { error: error.message });
         }
-    }
+    };
 
     get_active_sellers = async (req, res) => {
-        let { page, searchValue, parPage } = req.query
-        page = parseInt(page)
-        parPage = parseInt(parPage)
-
-        const skipPage = parPage * (page - 1)
+        let { page = 1, searchValue = '', parPage = 10 } = req.query;
+        const skipPage = parseInt(parPage) * (parseInt(page) - 1);
 
         try {
+            let query = { status: 'active' };
+
             if (searchValue) {
-                const sellers = await sellerModel.find({
-                    $text: { $search: searchValue },
-                    status: 'active'
-                }).skip(skipPage).limit(parPage).sort({ createdAt: -1 })
-
-                const totalSeller = await sellerModel.find({
-                    $text: { $search: searchValue },
-                    status: 'active'
-                }).countDocuments()
-
-                responseReturn(res, 200, { totalSeller, sellers })
-            } else {
-                const sellers = await sellerModel.find({ status: 'active' }).skip(skipPage).limit(parPage).sort({ createdAt: -1 })
-                const totalSeller = await sellerModel.find({ status: 'active' }).countDocuments()
-                responseReturn(res, 200, { totalSeller, sellers })
+                query = {
+                    ...query,
+                    $text: { $search: searchValue }
+                };
             }
 
+            const sellers = await sellerModel.find(query).skip(skipPage).limit(parseInt(parPage)).sort({ createdAt: -1 });
+            const totalSeller = await sellerModel.countDocuments(query);
+            console.log(sellers);
+            responseReturn(res, 200, { totalSeller, sellers });
         } catch (error) {
-            console.log('active seller get ' + error.message)
+            responseReturn(res, 500, { error: error.message });
         }
-    }
+    };
+
+     update_seller_data = async (req, res) => {
+        const { sellerId } = req.params;
+        const updateData = req.body;
+    
+        const shopInfo = {
+            shopName: updateData.shopName || '',
+            division: updateData.division || '',
+            district: updateData.district || '',
+            address: updateData.address || '',
+            bankName: updateData.bankName || '',
+            bankAccount: updateData.bankAccount || '',
+            ifscCode: updateData.ifscCode || '',
+            pinCode: updateData.pinCode || '',
+            login: updateData.login || '',
+            password: updateData.password || ''
+        };
+    
+        try {
+            const updatedSeller = await sellerModel.findByIdAndUpdate(
+                sellerId, 
+                { shopInfo }, 
+                { new: true, upsert: true }
+            );
+    
+            if (!updatedSeller) {
+                return responseReturn(res, 404, { message: 'Seller not found' });
+            }
+    
+            responseReturn(res, 200, { message: 'Seller updated successfully', seller: updatedSeller });
+        } catch (error) {
+            responseReturn(res, 500, { error: error.message });
+        }
+    };
 
     get_deactive_sellers = async (req, res) => {
-        let { page, searchValue, parPage } = req.query
-        page = parseInt(page)
-        parPage = parseInt(parPage)
-
-        const skipPage = parPage * (page - 1)
+        let { page = 1, searchValue = '', parPage = 10 } = req.query;
+        const skipPage = parseInt(parPage) * (parseInt(page) - 1);
 
         try {
+            let query = { status: 'deactive' };
+
             if (searchValue) {
-                const sellers = await sellerModel.find({
-                    $text: { $search: searchValue },
-                    status: 'deactive'
-                }).skip(skipPage).limit(parPage).sort({ createdAt: -1 })
-
-                const totalSeller = await sellerModel.find({
-                    $text: { $search: searchValue },
-                    status: 'deactive'
-                }).countDocuments()
-
-                responseReturn(res, 200, { totalSeller, sellers })
-            } else {
-                const sellers = await sellerModel.find({ status: 'deactive' }).skip(skipPage).limit(parPage).sort({ createdAt: -1 })
-                const totalSeller = await sellerModel.find({ status: 'deactive' }).countDocuments()
-                responseReturn(res, 200, { totalSeller, sellers })
+                query = {
+                    ...query,
+                    $text: { $search: searchValue }
+                };
             }
 
+            const sellers = await sellerModel.find(query).skip(skipPage).limit(parseInt(parPage)).sort({ createdAt: -1 });
+            const totalSeller = await sellerModel.countDocuments(query);
+
+            responseReturn(res, 200, { totalSeller, sellers });
         } catch (error) {
-            console.log('active seller get ' + error.message)
+            responseReturn(res, 500, { error: error.message });
         }
-    }
+    };
 }
 
-module.exports = new sellerController()
+module.exports = new sellerController();

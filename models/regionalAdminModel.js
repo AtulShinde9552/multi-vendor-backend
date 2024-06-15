@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose')
 
-const sellerSchema = new Schema({
+const regionaladminSchema = new Schema({
     name: {
         type: String,
         required: true
@@ -18,36 +18,21 @@ const sellerSchema = new Schema({
         type: String,
         default: 'seller'
     },
-    payment: {
-        type: String,
-        default: 'inactive'
-    },
-    method: {
-        type: String,
-        required: true,
-    },
     image: {
         type: String,
         default: ''
     },
-    shopInfo: {
-        type: Object,
-        default: {}
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'active', 'deactive'],
-        default: 'active'
-    },
 }, { timestamps: true })
 
 
-sellerSchema.index({
+regionaladminSchema.index({
+    name: 'text',
     email: 'text'
 }, {
     weights: {
+        name: 5,
         email: 4,
     }
 })
 
-module.exports = model('sellers', sellerSchema)
+module.exports = model('regionaladmins', regionaladminSchema)

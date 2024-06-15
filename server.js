@@ -1,16 +1,16 @@
-const express = require('express')
-const {
-    dbConnect
-} = require('./utiles/db')
-const app = express()
-const cors = require('cors')
-const http = require('http')
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
-require('dotenv').config()
-const socket = require('socket.io')
+const express = require('express');
+const { dbConnect } = require('./utiles/db')
+const app = express();
+const cors = require('cors');
+const http = require('http');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const dotenv = require('dotenv');
+const socket = require('socket.io');
 
-const server = http.createServer(app)
+dotenv.config();
+
+const server = http.createServer(app);
 
 app.use(cors({
     origin: process.env.mode === 'pro' ? [process.env.client_customer_production_url, process.env.client_admin_production_url] : ['http://localhost:3000', 'http://localhost:3001'],
@@ -19,143 +19,160 @@ app.use(cors({
 
 const io = socket(server, {
     cors: {
-        origin:process.env.mode === 'pro' ? [process.env.client_customer_production_url, process.env.client_admin_production_url] : ['http://localhost:3000', 'http://localhost:3001'],
-    credentials: true
+        origin: process.env.mode === 'pro' ? [process.env.client_customer_production_url, process.env.client_admin_production_url] : ['http://localhost:3000', 'http://localhost:3001'],
+        credentials: true
     }
 });
 
-var allCustomer = []
-var allSeller = []
+let allCustomer = [];
+let allSeller = [];
+let allAreaManagers = [];
+let admin = {};
 
 const addUser = (customerId, socketId, userInfo) => {
-    const checkUser = allCustomer.some(u => u.customerId === customerId)
-    if (!checkUser) {
-        allCustomer.push({
-            customerId,
-            socketId,
-            userInfo
-        })
+    if (!allCustomer.some(u => u.customerId === customerId)) {
+        allCustomer.push({ customerId, socketId, userInfo });
     }
-}
-
+};
 
 const addSeller = (sellerId, socketId, userInfo) => {
-    const chaeckSeller = allSeller.some(u => u.sellerId === sellerId)
-    if (!chaeckSeller) {
-        allSeller.push({
-            sellerId,
-            socketId,
-            userInfo
-        })
+    if (!allSeller.some(u => u.sellerId === sellerId)) {
+        allSeller.push({ sellerId, socketId, userInfo });
     }
-}
+};
 
+const addAreaManager = (areaManagerId, socketId, userInfo) => {
+    if (!allAreaManagers.some(u => u.areaManagerId === areaManagerId)) {
+        allAreaManagers.push({ areaManagerId, socketId, userInfo });
+    }
+};
 
-const findCustomer = (customerId) => {
-    return allCustomer.find(c => c.customerId === customerId)
-}
-const findSeller = (sellerId) => {
-    return allSeller.find(c => c.sellerId === sellerId)
-}
+const findCustomer = (customerId) => allCustomer.find(c => c.customerId === customerId);
+const findSeller = (sellerId) => allSeller.find(c => c.sellerId === sellerId);
+const findAreaManager = (areaManagerId) => allAreaManagers.find(c => c.areaManagerId === areaManagerId);
 
 const remove = (socketId) => {
-    allCustomer = allCustomer.filter(c => c.socketId !== socketId)
-    allSeller = allSeller.filter(c => c.socketId !== socketId)
-}
-
-let admin = {}
+    allCustomer = allCustomer.filter(c => c.socketId !== socketId);
+    allSeller = allSeller.filter(c => c.socketId !== socketId);
+    allAreaManagers = allAreaManagers.filter(c => c.socketId !== socketId);
+};
 
 const removeAdmin = (socketId) => {
     if (admin.socketId === socketId) {
-        admin = {}
+        admin = {};
     }
-}
+};
 
 io.on('connection', (soc) => {
-    console.log('socket server is connected...')
+    console.log('socket server is connected...');
 
     soc.on('add_user', (customerId, userInfo) => {
-        addUser(customerId, soc.id, userInfo)
-        io.emit('activeSeller', allSeller)
-        io.emit('activeCustomer', allCustomer)
-    })
-    soc.on('add_seller', (sellerId, userInfo) => {
-        addSeller(sellerId, soc.id, userInfo)
-        io.emit('activeSeller', allSeller)
-        io.emit('activeCustomer', allCustomer)
-        io.emit('activeAdmin', { status: true })
+        addUser(customerId, soc.id, userInfo);
+        io.emit('activeSeller', allSeller);
+        io.emit('activeCustomer', allCustomer);
+    });
 
-    })
+    soc.on('add_seller', (sellerId, userInfo) => {
+        addSeller(sellerId, soc.id, userInfo);
+        io.emit('activeSeller', allSeller);
+        io.emit('activeCustomer', allCustomer);
+        io.emit('activeAdmin', { status: true });
+        io.emit('activeAreaManager', allAreaManagers); // Emit activeAreaManager event
+    });
 
     soc.on('add_admin', (adminInfo) => {
-        delete adminInfo.email
-        admin = adminInfo
-        admin.socketId = soc.id
-        io.emit('activeSeller', allSeller)
-        io.emit('activeAdmin', { status: true })
+        delete adminInfo.email;
+        admin = adminInfo;
+        admin.socketId = soc.id;
+        io.emit('activeSeller', allSeller);
+        io.emit('activeAdmin', { status: true });
+    });
 
-    })
+    soc.on('add_area_manager', (areaManagerId, userInfo) => {
+        addAreaManager(areaManagerId, soc.id, userInfo);
+        io.emit('activeAreaManager', allAreaManagers);
+        io.emit('activeAdmin', { status: true });
+    });
+
     soc.on('send_seller_message', (msg) => {
-        const customer = findCustomer(msg.receverId)
-        if (customer !== undefined) {
-            soc.to(customer.socketId).emit('seller_message', msg)
+        const customer = findCustomer(msg.receverId);
+        if (customer) {
+            soc.to(customer.socketId).emit('seller_message', msg);
         }
-    })
+    });
 
     soc.on('send_customer_message', (msg) => {
-        const seller = findSeller(msg.receverId)
-        if (seller !== undefined) {
-            soc.to(seller.socketId).emit('customer_message', msg)
+        const seller = findSeller(msg.receverId);
+        if (seller) {
+            soc.to(seller.socketId).emit('customer_message', msg);
         }
-    })
+    });
 
-    soc.on('send_message_admin_to_seller', msg => {
-        const seller = findSeller(msg.receverId)
-        if (seller !== undefined) {
-            soc.to(seller.socketId).emit('receved_admin_message', msg)
+    soc.on('send_message_admin_to_seller', (msg) => {
+        const seller = findSeller(msg.receverId);
+        if (seller) {
+            soc.to(seller.socketId).emit('receved_admin_message', msg);
         }
-    })
+    });
 
-
-    soc.on('send_message_seller_to_admin', msg => {
-
+    soc.on('send_message_seller_to_admin', (msg) => {
         if (admin.socketId) {
-            soc.to(admin.socketId).emit('receved_seller_message', msg)
+            soc.to(admin.socketId).emit('receved_seller_message', msg);
         }
-    })
+    });
 
+    soc.on('send_message_area_manager_to_seller', (msg) => {
+        const seller = findSeller(msg.receverId);
+        if (seller) {
+            soc.to(seller.socketId).emit('received_area_manager_message', msg);
+        }
+    });
+
+    soc.on('send_message_seller_to_area_manager', (msg) => {
+        const areaManager = findAreaManager(msg.receverId);
+        if (areaManager) {
+            soc.to(areaManager.socketId).emit('received_seller_message', msg);
+        }
+    });
 
     soc.on('disconnect', () => {
-        console.log('user disconnect')
-        remove(soc.id)
-        removeAdmin(soc.id)
-        io.emit('activeAdmin', { status: false })
-        io.emit('activeSeller', allSeller)
-        io.emit('activeCustomer', allCustomer)
+        console.log('user disconnected');
+        remove(soc.id);
+        removeAdmin(soc.id);
+        io.emit('activeAdmin', { status: admin.socketId ? true : false });
+        io.emit('activeAreaManager', allAreaManagers); // Emit activeAreaManager event after disconnect
+        io.emit('activeSeller', allSeller);
+        io.emit('activeCustomer', allCustomer);
+    });
+});
 
-    })
-})
+app.use(bodyParser.json());
+app.use(cookieParser());
 
-app.use(bodyParser.json())
-app.use(cookieParser())
+const routes = [
+    './routes/chatRoutes',
+    './routes/paymentRoutes',
+    './routes/bannerRoutes',
+    './routes/dashboard/dashboardIndexRoutes',
+    './routes/home/homeRoutes',
+    './routes/order/orderRoutes',
+    './routes/home/cardRoutes',
+    './routes/authRoutes',
+    './routes/home/customerAuthRoutes',
+    './routes/dashboard/sellerRoutes',
+    './routes/dashboard/categoryRoutes',
+    './routes/dashboard/productRoutes'
+];
 
+routes.forEach(route => {
+    app.use('/api', require(route));
+});
 
-app.use('/api', require('./routes/chatRoutes'))
+app.get('/', (req, res) => res.send('Hello World!'));
 
-
-app.use('/api', require('./routes/paymentRoutes'))
-app.use('/api', require('./routes/bannerRoutes'))
-app.use('/api', require('./routes/dashboard/dashboardIndexRoutes'))
-
-app.use('/api/home', require('./routes/home/homeRoutes'))
-app.use('/api', require('./routes/order/orderRoutes'))
-app.use('/api', require('./routes/home/cardRoutes'))
-app.use('/api', require('./routes/authRoutes'))
-app.use('/api', require('./routes/home/customerAuthRoutes'))
-app.use('/api', require('./routes/dashboard/sellerRoutes'))
-app.use('/api', require('./routes/dashboard/categoryRoutes'))
-app.use('/api', require('./routes/dashboard/productRoutes'))
-app.get('/', (req, res) => res.send('Hello World!'))
-const port = process.env.PORT
-dbConnect()
-server.listen(port, () => console.log(`Server is running on port ${port}!`))
+const port = process.env.PORT || 3000; // Default to port 3000 if PORT is not defined
+dbConnect().then(() => {
+    server.listen(port, () => console.log(`Server is running on port ${port}!`));
+}).catch(err => {
+    console.error('Failed to connect to the database', err);
+});

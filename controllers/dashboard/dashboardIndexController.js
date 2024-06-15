@@ -122,3 +122,92 @@ module.exports.get_admin_dashboard_data = async (req, res) => {
     }
 
 }
+
+
+module.exports.get_area_manager_dashboard_data = async (req, res) => {
+    const { id } = req;
+
+    try {
+        const totalSale = await myShopWallet.aggregate([
+            {
+                $match: { areaManagerId: ObjectId(id) }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: '$amount' }
+                }
+            }
+        ]);
+
+        const totalProduct = await productModel.countDocuments({ areaManagerId: ObjectId(id) });
+        const totalOrder = await customerOrder.countDocuments({ areaManagerId: ObjectId(id) });
+        const totalSeller = await sellerModel.countDocuments({ areaManagerId: ObjectId(id) });
+
+        const messages = await adminSellerMessage.find({
+            $or: [
+                { senderId: id },
+                { receiverId: id }
+            ]
+        }).limit(3);
+
+        const recentOrders = await customerOrder.find({ areaManagerId: ObjectId(id) }).limit(5);
+
+        responseReturn(res, 200, {
+            totalOrder,
+            totalSale: totalSale.length > 0 ? totalSale[0].totalAmount : 0,
+            totalSeller,
+            messages,
+            recentOrders,
+            totalProduct
+        });
+    } catch (error) {
+        console.error('get_area_manager_dashboard_data error: ' + error.message);
+        responseReturn(res, 500, { error: 'Internal server error' });
+    }
+};
+
+module.exports.get_regional_admin_dashboard_data = async (req, res) => {
+    const { id } = req;
+
+    try {
+        const totalSale = await myShopWallet.aggregate([
+            {
+                $match: { regionalAdminId: ObjectId(id) }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: '$amount' }
+                }
+            }
+        ]);
+
+        const totalProduct = await productModel.countDocuments({ regionalAdminId: ObjectId(id) });
+        const totalOrder = await customerOrder.countDocuments({ regionalAdminId: ObjectId(id) });
+        const totalSeller = await sellerModel.countDocuments({ regionalAdminId: ObjectId(id) });
+
+        const messages = await adminSellerMessage.find({
+            $or: [
+                { senderId: id },
+                { receiverId: id }
+            ]
+        }).limit(3);
+
+        const recentOrders = await customerOrder.find({ regionalAdminId: ObjectId(id) }).limit(5);
+
+        responseReturn(res, 200, {
+            totalOrder,
+            totalSale: totalSale.length > 0 ? totalSale[0].totalAmount : 0,
+            totalSeller,
+            messages,
+            recentOrders,
+            totalProduct
+        });
+    } catch (error) {
+        console.error('get_regional_admin_dashboard_data error: ' + error.message);
+        responseReturn(res, 500, { error: 'Internal server error' });
+    }
+};
+
+
