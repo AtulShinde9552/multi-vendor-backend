@@ -88,6 +88,29 @@ class AuthControllers {
         }
     }
 
+    area_manager_register = async (req, res) => {
+        const { email, name, password} = req.body;
+        try {
+            const getUser = await areaManagerModel.findOne({ email });
+            if (getUser) {
+                responseReturn(res, 404, { error: 'Email already exists' });
+            } else {
+                const seller = await sellerModel.create({
+                    name,
+                    email,
+                    password: await bcrypt.hash(password, 10),
+                });
+                await areaManagerModel.create({
+                    myId: seller.id
+                });
+                responseReturn(res, 201, { message: 'Register success' });
+            }
+        } catch (error) {
+            responseReturn(res, 500, { error: 'Internal server error' });
+        }
+    }
+
+
     seller_register = async (req, res) => {
         const { email, name, password, status } = req.body;
         try {

@@ -21,7 +21,8 @@ const areamanagerSchema = new Schema({
     role: {
         type: String,
         default: 'areamanager'
-    }
+    },
+    
 })
 
 module.exports = model('areamanagers',areamanagerSchema)

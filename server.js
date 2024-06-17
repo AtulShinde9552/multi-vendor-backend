@@ -161,7 +161,9 @@ const routes = [
     './routes/home/customerAuthRoutes',
     './routes/dashboard/sellerRoutes',
     './routes/dashboard/categoryRoutes',
-    './routes/dashboard/productRoutes'
+    './routes/dashboard/productRoutes',
+    './routes/dashboard/areamanagerRoutes'
+
 ];
 
 routes.forEach(route => {
