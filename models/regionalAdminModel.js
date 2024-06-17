@@ -16,7 +16,7 @@ const regionaladminSchema = new Schema({
     },
     role: {
         type: String,
-        default: 'seller'
+        default: 'regionaladmin'
     },
     image: {
         type: String,

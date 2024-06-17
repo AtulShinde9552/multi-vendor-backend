@@ -8,8 +8,8 @@ router.get('/get-sellers',authMiddleware,sellerController.get_active_sellers)
 router.get('/get-deactive-sellers',authMiddleware,sellerController.get_deactive_sellers)
 
 router.get('/get-seller/:sellerId',authMiddleware,sellerController.get_seller)
-router.post('/seller-status-update',authMiddleware,sellerController.seller_status_update)
-router.put('/update_seller_data',authMiddleware,sellerController.seller_status_update)
+// router.post('/seller-status-update',authMiddleware,sellerController.seller_status_update)
+router.post('/update_seller_data',authMiddleware,sellerController.update_seller_data)
 
 
 module.exports = router

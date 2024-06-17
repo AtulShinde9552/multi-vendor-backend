@@ -146,7 +146,7 @@ class AuthControllers {
             if (getUser) {
                 responseReturn(res, 404, { error: 'Email already exists' });
             } else {
-                const regionalAdmin = await regionalAdminModel.create({
+                await regionalAdminModel.create({
                     name,
                     email,
                     password: await bcrypt.hash(password, 10)
