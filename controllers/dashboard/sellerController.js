@@ -63,26 +63,26 @@ class sellerController {
             bankAccount,
             ifscCode,
             pinCode,
-            login,
-            password} = req.body
-
+            shopInfo  // Add shopInfo here
+        } = req.body
     
         try {
-            await sellerModel.findByIdAndUpdate(sellerId,{
-            shopName,
-            division,
-            district,
-            address,
-            bankName,
-            bankAccount,
-            ifscCode,
-            pinCode,
-            login,
-            password,sellerId
-            })
-            const seller = await sellerModel.findById(sellerId)
-
-            responseReturn(res, 200, { message: 'Seller updated successfully', seller});
+            const updateData = {
+                shopName,
+                division,
+                district,
+                address,
+                bankName,
+                bankAccount,
+                ifscCode,
+                pinCode,
+                ...(shopInfo && { shopInfo })  // Conditionally include shopInfo
+            };
+    
+            await sellerModel.findByIdAndUpdate(sellerId, updateData);
+            const seller = await sellerModel.findById(sellerId);
+    
+            responseReturn(res, 200, { message: 'Seller updated successfully', seller });
         } catch (error) {
             responseReturn(res, 500, { error: error.message });
         }
