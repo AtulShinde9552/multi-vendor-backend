@@ -37,21 +37,6 @@ class sellerController {
         }
     };
 
-    // product_update = async (req, res) => {
-    //     let { name, description, discount, price, brand, productId, stock } = req.body;
-    //     name = name.trim()
-    //     const slug = name.split(' ').join('-')
-    //     try {
-    //         await productModel.findByIdAndUpdate(productId, {
-    //             name, description, discount, price, brand, productId, stock, slug
-    //         })
-    //         const product = await productModel.findById(productId)
-    //         responseReturn(res, 200, { product, message: 'product update success' })
-    //     } catch (error) {
-    //         responseReturn(res, 500, { error: error.message })
-    //     }
-    // }
-
     update_seller_data = async (req, res) => {
         const { sellerId } = req.body;
         let {
@@ -63,7 +48,7 @@ class sellerController {
             bankAccount,
             ifscCode,
             pinCode,
-            shopInfo  // Add shopInfo here
+            shopInfo
         } = req.body
     
         try {
@@ -76,7 +61,7 @@ class sellerController {
                 bankAccount,
                 ifscCode,
                 pinCode,
-                ...(shopInfo && { shopInfo })  // Conditionally include shopInfo
+                ...(shopInfo && { shopInfo })
             };
     
             await sellerModel.findByIdAndUpdate(sellerId, updateData);
