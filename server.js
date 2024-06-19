@@ -162,7 +162,9 @@ const routes = [
     './routes/dashboard/sellerRoutes',
     './routes/dashboard/categoryRoutes',
     './routes/dashboard/productRoutes',
-    './routes/dashboard/areamanagerRoutes'
+    './routes/dashboard/areamanagerRoutes',
+    './routes/dashboard/regionaladminRoutes'
+
 
 ];
 

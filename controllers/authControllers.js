@@ -36,6 +36,27 @@ class AuthControllers {
         }
     }
 
+    area_manager_register = async (req, res) => {
+        const { email, name, password } = req.body;
+        try {
+            const getUser = await areaManagerModel.findOne({ email });
+            if (getUser) {
+                responseReturn(res, 404, { error: 'Email already exists' });
+            } else {
+                await areaManagerModel.create({
+                    name,
+                    email,
+                    password: await bcrypt.hash(password, 10)
+                });
+                responseReturn(res, 201, { message: 'Register success' });
+                console.log(res);
+            }
+        } catch (error) {
+            responseReturn(res, 500, { error: 'Internal server error' });
+            console.log(error);
+        }
+    }
+
     area_manager_login = async (req, res) => {
         const { email, password } = req.body;
         try {
@@ -59,6 +80,31 @@ class AuthControllers {
             }
         } catch (error) {
             responseReturn(res, 500, { error: error.message });
+        }
+    }
+
+    seller_register = async (req, res) => {
+        const { email, name, password, status } = req.body;
+        try {
+            const getUser = await sellerModel.findOne({ email });
+            if (getUser) {
+                responseReturn(res, 404, { error: 'Email already exists' });
+            } else {
+                const seller = await sellerModel.create({
+                    name,
+                    email,
+                    password: await bcrypt.hash(password, 10),
+                    method: 'manual',
+                    shopInfo: {},
+                    status: status || 'active'
+                });
+                await sellerCustomerModel.create({
+                    myId: seller.id
+                });
+                responseReturn(res, 201, { message: 'Register success' });
+            }
+        } catch (error) {
+            responseReturn(res, 500, { error: 'Internal server error' });
         }
     }
 
@@ -88,51 +134,26 @@ class AuthControllers {
         }
     }
 
-    area_manager_register = async (req, res) => {
+    
+    regional_admin_register = async (req, res) => {
         const { email, name, password } = req.body;
         try {
-            const getUser = await areaManagerModel.findOne({ email });
+            const getUser = await regionalAdminModel.findOne({ email });
             if (getUser) {
                 responseReturn(res, 404, { error: 'Email already exists' });
             } else {
-                await areaManagerModel.create({
+                await regionalAdminModel.create({
                     name,
                     email,
                     password: await bcrypt.hash(password, 10)
                 });
                 responseReturn(res, 201, { message: 'Register success' });
-                console.log(res);
             }
         } catch (error) {
             responseReturn(res, 500, { error: 'Internal server error' });
-            console.log(error);
         }
     }
 
-    seller_register = async (req, res) => {
-        const { email, name, password, status } = req.body;
-        try {
-            const getUser = await sellerModel.findOne({ email });
-            if (getUser) {
-                responseReturn(res, 404, { error: 'Email already exists' });
-            } else {
-                const seller = await sellerModel.create({
-                    name,
-                    email,
-                    password: await bcrypt.hash(password, 10),
-                    method: 'manual',
-                    shopInfo: {},
-                    status: status || 'active'
-                });
-                await sellerCustomerModel.create({
-                    myId: seller.id
-                });
-                responseReturn(res, 201, { message: 'Register success' });
-            }
-        } catch (error) {
-            responseReturn(res, 500, { error: 'Internal server error' });
-        }
-    }
 
     regional_admin_login = async (req, res) => {
         const { email, password } = req.body;
@@ -157,25 +178,6 @@ class AuthControllers {
             }
         } catch (error) {
             responseReturn(res, 500, { error: error.message });
-        }
-    }
-
-    regional_admin_register = async (req, res) => {
-        const { email, name, password } = req.body;
-        try {
-            const getUser = await regionalAdminModel.findOne({ email });
-            if (getUser) {
-                responseReturn(res, 404, { error: 'Email already exists' });
-            } else {
-                await regionalAdminModel.create({
-                    name,
-                    email,
-                    password: await bcrypt.hash(password, 10)
-                });
-                responseReturn(res, 201, { message: 'Register success' });
-            }
-        } catch (error) {
-            responseReturn(res, 500, { error: 'Internal server error' });
         }
     }
 
