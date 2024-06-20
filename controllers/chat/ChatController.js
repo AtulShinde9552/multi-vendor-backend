@@ -1,8 +1,9 @@
-const sellerModel = require('../../models/sellerModel')
+// const sellerModel = require('../../models/sellerModel')
+const regionalAdminModel = require('../../models/regionalAdminModel')
 const customerModel = require('../../models/customerModel')
 const sellerCustomerModel = require('../../models/chat/sellerCustomerModel')
 const sellerCustomerMessage = require('../../models/chat/sellerCustomerMessage')
-const adminSellerMessage = require('../../models/chat/adminSellerMessage')
+const adminRegionaladminMessage = require('../../models/chat/adminRegionaladminMessage')
 const { responseReturn } = require('../../utiles/response')
 
 
@@ -275,19 +276,19 @@ class chatController {
         }
     }
 
-    get_sellers = async (req, res) => {
+    get_regionaladmin = async (req, res) => {
         try {
-            const sellers = await sellerModel.find({})
+            const sellers = await regionalAdminModel.find({})
             responseReturn(res, 200, { sellers })
         } catch (error) {
             console.log(error)
         }
     }
 
-    seller_admin_message_insert = async (req, res) => {
+    regionaladmin_admin_message_insert = async (req, res) => {
         const { senderId, receverId, message, senderName } = req.body
         try {
-            const messageData = await adminSellerMessage.create({
+            const messageData = await adminRegionaladminMessage.create({
                 senderId,
                 receverId,
                 senderName,
@@ -304,7 +305,7 @@ class chatController {
         const { receverId } = req.params;
         const id = ""
         try {
-            const messages = await adminSellerMessage.find({
+            const messages = await adminRegionaladminMessage.find({
                 $or: [
                     {
                         $and: [{
@@ -336,12 +337,12 @@ class chatController {
         }
     }
 
-    get_seller_messages = async (req, res) => {
+    get_regionaladmin_messages = async (req, res) => {
 
         const receverId = ""
         const { id } = req
         try {
-            const messages = await adminSellerMessage.find({
+            const messages = await adminRegionaladminMessage.find({
                 $or: [
                     {
                         $and: [{

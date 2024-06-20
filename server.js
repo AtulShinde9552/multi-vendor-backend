@@ -1,5 +1,5 @@
 const express = require('express');
-const { dbConnect } = require('./utiles/db')
+const { dbConnect } = require('./utiles/db');
 const app = express();
 const cors = require('cors');
 const http = require('http');
@@ -27,6 +27,7 @@ const io = socket(server, {
 let allCustomer = [];
 let allSeller = [];
 let allAreaManagers = [];
+let allRegionalAdmins = [];
 let admin = {};
 
 const addUser = (customerId, socketId, userInfo) => {
@@ -47,14 +48,22 @@ const addAreaManager = (areaManagerId, socketId, userInfo) => {
     }
 };
 
+const addRegionalAdmin = (regionalAdminId, socketId, userInfo) => {
+    if (!allRegionalAdmins.some(u => u.regionalAdminId === regionalAdminId)) {
+        allRegionalAdmins.push({ regionalAdminId, socketId, userInfo });
+    }
+};
+
 const findCustomer = (customerId) => allCustomer.find(c => c.customerId === customerId);
 const findSeller = (sellerId) => allSeller.find(c => c.sellerId === sellerId);
 const findAreaManager = (areaManagerId) => allAreaManagers.find(c => c.areaManagerId === areaManagerId);
+const findRegionalAdmin = (regionalAdminId) => allRegionalAdmins.find(c => c.regionalAdminId === regionalAdminId);
 
 const remove = (socketId) => {
     allCustomer = allCustomer.filter(c => c.socketId !== socketId);
     allSeller = allSeller.filter(c => c.socketId !== socketId);
     allAreaManagers = allAreaManagers.filter(c => c.socketId !== socketId);
+    allRegionalAdmins = allRegionalAdmins.filter(c => c.socketId !== socketId);
 };
 
 const removeAdmin = (socketId) => {
@@ -78,6 +87,7 @@ io.on('connection', (soc) => {
         io.emit('activeCustomer', allCustomer);
         io.emit('activeAdmin', { status: true });
         io.emit('activeAreaManager', allAreaManagers); // Emit activeAreaManager event
+        io.emit('activeRegionalAdmin', allRegionalAdmins); // Emit activeRegionalAdmin event
     });
 
     soc.on('add_admin', (adminInfo) => {
@@ -91,6 +101,12 @@ io.on('connection', (soc) => {
     soc.on('add_area_manager', (areaManagerId, userInfo) => {
         addAreaManager(areaManagerId, soc.id, userInfo);
         io.emit('activeAreaManager', allAreaManagers);
+        io.emit('activeAdmin', { status: true });
+    });
+
+    soc.on('add_regional_admin', (regionalAdminId, userInfo) => {
+        addRegionalAdmin(regionalAdminId, soc.id, userInfo);
+        io.emit('activeRegionalAdmin', allRegionalAdmins);
         io.emit('activeAdmin', { status: true });
     });
 
@@ -135,12 +151,26 @@ io.on('connection', (soc) => {
         }
     });
 
+    soc.on('send_message_admin_to_regional_admin', (msg) => {
+        const regionalAdmin = findRegionalAdmin(msg.receverId);
+        if (regionalAdmin) {
+            soc.to(regionalAdmin.socketId).emit('received_admin_message', msg);
+        }
+    });
+
+    soc.on('send_message_regional_admin_to_admin', (msg) => {
+        if (admin.socketId) {
+            soc.to(admin.socketId).emit('received_regional_admin_message', msg);
+        }
+    });
+
     soc.on('disconnect', () => {
         console.log('user disconnected');
         remove(soc.id);
         removeAdmin(soc.id);
         io.emit('activeAdmin', { status: admin.socketId ? true : false });
         io.emit('activeAreaManager', allAreaManagers); // Emit activeAreaManager event after disconnect
+        io.emit('activeRegionalAdmin', allRegionalAdmins); // Emit activeRegionalAdmin event after disconnect
         io.emit('activeSeller', allSeller);
         io.emit('activeCustomer', allCustomer);
     });
@@ -164,8 +194,6 @@ const routes = [
     './routes/dashboard/productRoutes',
     './routes/dashboard/areamanagerRoutes',
     './routes/dashboard/regionaladminRoutes'
-
-
 ];
 
 routes.forEach(route => {

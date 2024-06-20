@@ -1,5 +1,5 @@
 const formidable = require('formidable')
-const cloudinary = require('cloudinary').v2
+const cloudinary = require('cloudinary')
 const productModel = require('../../models/productModel');
 const { responseReturn } = require('../../utiles/response');
 class productController {
