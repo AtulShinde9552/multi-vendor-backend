@@ -4,8 +4,12 @@ class areamanagerController {
 get_areamanager= async(req, res) => {
     try {
         const areaManagers = await areaManagerModel.find(); 
-        responseReturn(res, 200, areaManagers, "Area Managers fetched successfully");
-        console.log(areaManagers);
+        const response = {
+            total: areaManagers.length,
+            data: areaManagers
+        };
+        responseReturn(res, 200, response, "Area Managers fetched successfully");
+        console.log(response);
     } catch (error) {
         responseReturn(res, 500, null, "Failed to fetch Area Managers");
     }

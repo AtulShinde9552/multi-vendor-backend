@@ -4,8 +4,12 @@ class regionaladminController {
     get_regionaladmin= async(req, res) => {
     try {
         const regionaladmins = await regionalAdminModel.find(); 
-        responseReturn(res, 200, regionaladmins, "Area Managers fetched successfully");
-        console.log(regionaladmins);
+        const response = {
+            total: regionaladmins.length,
+            data: regionaladmins
+        };
+        responseReturn(res, 200, response, "Area Managers fetched successfully");
+        console.log(response);
     } catch (error) {
         responseReturn(res, 500, null, "Failed to fetch Area Managers");
     }

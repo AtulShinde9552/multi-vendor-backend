@@ -18,6 +18,18 @@ const regionaladminSchema = new Schema({
         type: String,
         default: 'regionaladmin'
     },
+    region: {
+        type: String,
+        required: true
+    },
+     regionCode: {
+        type: Number,
+        required: true
+    },
+    region: {
+        type: String,
+        required: true
+    },
     image: {
         type: String,
         default: ''

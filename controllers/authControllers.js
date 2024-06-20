@@ -37,7 +37,7 @@ class AuthControllers {
     }
 
     area_manager_register = async (req, res) => {
-        const { email, name, password } = req.body;
+        const { email, name, password, areaname, areacode } = req.body;
         try {
             const getUser = await areaManagerModel.findOne({ email });
             if (getUser) {
@@ -45,6 +45,8 @@ class AuthControllers {
             } else {
                 await areaManagerModel.create({
                     name,
+                    areaname,
+                    areacode,
                     email,
                     password: await bcrypt.hash(password, 10)
                 });
@@ -136,7 +138,7 @@ class AuthControllers {
 
     
     regional_admin_register = async (req, res) => {
-        const { email, name, password } = req.body;
+        const { email, name, password,region,regionCode} = req.body;
         try {
             const getUser = await regionalAdminModel.findOne({ email });
             if (getUser) {
@@ -145,6 +147,8 @@ class AuthControllers {
                 await regionalAdminModel.create({
                     name,
                     email,
+                    region,
+                    regionCode,
                     password: await bcrypt.hash(password, 10)
                 });
                 responseReturn(res, 201, { message: 'Register success' });
